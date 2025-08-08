@@ -23,3 +23,10 @@ export interface Question {
   statements: QuestionStatement[];
   instructions: string;
 }
+
+export type SortOrder = 'asc' | 'desc';
+
+export interface SortConfig {
+  column: string;
+  order: SortOrder;
+}

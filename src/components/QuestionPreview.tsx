@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Question } from '@/types/question';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Question, DataRow, SortConfig } from '@/types/question';
 
 interface QuestionPreviewProps {
   question: Question;
@@ -10,6 +11,38 @@ interface QuestionPreviewProps {
 
 export const QuestionPreview: React.FC<QuestionPreviewProps> = ({ question }) => {
   const { title, description, dataColumns, dataRows, statements, instructions } = question;
+  const [sortConfig, setSortConfig] = useState<SortConfig>({ column: '', order: 'asc' });
+
+  // Sort the data rows based on the current sort configuration
+  const sortedRows = useMemo(() => {
+    if (!sortConfig.column) return dataRows;
+
+    return [...dataRows].sort((a, b) => {
+      const aValue = a[sortConfig.column];
+      const bValue = b[sortConfig.column];
+      
+      // Handle different data types
+      let comparison = 0;
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        // For string comparison
+        comparison = aValue.localeCompare(bValue);
+      } else {
+        // For numeric comparison (convert strings to numbers)
+        const aNum = parseFloat(String(aValue).replace('%', ''));
+        const bNum = parseFloat(String(bValue).replace('%', ''));
+        comparison = aNum - bNum;
+      }
+
+      return sortConfig.order === 'asc' ? comparison : -comparison;
+    });
+  }, [dataRows, sortConfig]);
+
+  const handleSortChange = (columnKey: string) => {
+    setSortConfig(prev => ({
+      column: columnKey,
+      order: prev.column === columnKey && prev.order === 'asc' ? 'desc' : 'asc'
+    }));
+  };
 
   if (!dataColumns.length || !dataRows.length || !statements.length) {
     return (
@@ -61,6 +94,32 @@ export const QuestionPreview: React.FC<QuestionPreviewProps> = ({ question }) =>
               </p>
             </div>
 
+            {/* Sort Controls */}
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-sm font-medium text-foreground">Sort by:</span>
+              <Select 
+                value={sortConfig.column || 'none'} 
+                onValueChange={(value) => value === 'none' ? setSortConfig({ column: '', order: 'asc' }) : handleSortChange(value)}
+              >
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Select column to sort" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No sorting</SelectItem>
+                  {dataColumns.map((column) => (
+                    <SelectItem key={column.key} value={column.key}>
+                      {column.label}
+                      {sortConfig.column === column.key && (
+                        <span className="ml-2 text-xs">
+                          {sortConfig.order === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Data Table */}
             <div className="bg-card border border-border rounded-lg overflow-hidden">
               <div className="overflow-x-auto">
@@ -68,15 +127,26 @@ export const QuestionPreview: React.FC<QuestionPreviewProps> = ({ question }) =>
                   <thead>
                     <tr className="border-b border-border bg-muted/50">
                       {dataColumns.map((column) => (
-                        <th key={column.key} className="px-3 py-2 text-left font-semibold text-foreground">
-                          {column.label}
+                        <th 
+                          key={column.key} 
+                          className="px-3 py-2 text-left font-semibold text-foreground cursor-pointer hover:bg-muted/70 transition-colors"
+                          onClick={() => handleSortChange(column.key)}
+                        >
+                          <div className="flex items-center gap-2">
+                            {column.label}
+                            {sortConfig.column === column.key && (
+                              <span className="text-primary">
+                                {sortConfig.order === 'asc' ? '↑' : '↓'}
+                              </span>
+                            )}
+                          </div>
                         </th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {dataRows.map((row) => (
-                      <tr key={row.id} className="border-b border-border last:border-b-0">
+                    {sortedRows.map((row) => (
+                      <tr key={row.id} className="border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors">
                         {dataColumns.map((column) => (
                           <td key={column.key} className="px-3 py-2 text-foreground">
                             {column.type === 'percentage' 
