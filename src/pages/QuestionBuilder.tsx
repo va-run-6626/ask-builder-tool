@@ -6,14 +6,18 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DataTableInput } from '@/components/DataTableInput';
 import { StatementsInput } from '@/components/StatementsInput';
+import { MultiColumnSelectionInput } from '@/components/MultiColumnSelectionInput';
+import { DataSufficiencyInput } from '@/components/DataSufficiencyInput';
 import { QuestionPreview } from '@/components/QuestionPreview';
-import { Question, DataColumn, DataRow, QuestionStatement } from '@/types/question';
+import { Question, DataColumn, DataRow, QuestionStatement, QuestionFormat } from '@/types/question';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Download, Save, Eye } from 'lucide-react';
 
 const QuestionBuilder = () => {
   const [question, setQuestion] = useState<Question>({
     title: 'GMAT™ Data Insights Question',
     description: 'Practice Question - Data Analysis',
+    format: 'yes-no-statements',
     dataColumns: [
       { key: 'item', label: 'Item', type: 'text' },
       { key: 'placement', label: 'Page placement', type: 'text' },
@@ -44,6 +48,32 @@ const QuestionBuilder = () => {
 
   const updateQuestionField = (field: keyof Question, value: any) => {
     setQuestion(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFormatChange = (newFormat: QuestionFormat) => {
+    setQuestion(prev => ({
+      ...prev,
+      format: newFormat,
+      // Initialize format-specific fields
+      selectionColumns: newFormat === 'multi-column-selection' ? ['Column 1', 'Column 2'] : prev.selectionColumns,
+      selectionOptions: newFormat === 'multi-column-selection' ? [] : prev.selectionOptions,
+      questionText: newFormat === 'data-sufficiency' ? '' : prev.questionText,
+      sufficiencyStatements: newFormat === 'data-sufficiency' ? [] : prev.sufficiencyStatements,
+      sufficiencyOptions: newFormat === 'data-sufficiency' ? [] : prev.sufficiencyOptions
+    }));
+  };
+
+  const getQuestionTypeLabel = (format: QuestionFormat) => {
+    switch (format) {
+      case 'yes-no-statements':
+        return 'Yes/No Statements';
+      case 'multi-column-selection':
+        return 'Multi-Column Selection';
+      case 'data-sufficiency':
+        return 'Data Sufficiency';
+      default:
+        return 'Unknown';
+    }
   };
 
   const exportQuestion = () => {
@@ -84,11 +114,41 @@ const QuestionBuilder = () => {
 
       {/* Main Content */}
       <div className="container py-6">
+        {/* Question Format Selector */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-foreground">Question Format</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-medium text-foreground">Question Type:</label>
+              <Select value={question.format} onValueChange={handleFormatChange}>
+                <SelectTrigger className="w-64">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="yes-no-statements">Yes/No Statements</SelectItem>
+                  <SelectItem value="multi-column-selection">Multi-Column Selection</SelectItem>
+                  <SelectItem value="data-sufficiency">Data Sufficiency</SelectItem>
+                </SelectContent>
+              </Select>
+              <span className="text-sm text-muted-foreground">
+                Current: {getQuestionTypeLabel(question.format)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
         <Tabs defaultValue="basic" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="basic">Basic Info</TabsTrigger>
-            <TabsTrigger value="data">Data Table</TabsTrigger>
-            <TabsTrigger value="statements">Statements</TabsTrigger>
+            <TabsTrigger value="data">
+              {question.format === 'data-sufficiency' ? 'Question Content' : 'Data Table'}
+            </TabsTrigger>
+            <TabsTrigger value="statements">
+              {question.format === 'yes-no-statements' ? 'Statements' : 
+               question.format === 'multi-column-selection' ? 'Selection Options' : 'Answer Options'}
+            </TabsTrigger>
             <TabsTrigger value="preview">
               <Eye className="w-4 h-4 mr-2" />
               Preview
@@ -127,21 +187,58 @@ const QuestionBuilder = () => {
           </TabsContent>
 
           <TabsContent value="data" className="space-y-6">
-            <DataTableInput
-              columns={question.dataColumns}
-              rows={question.dataRows}
-              onColumnsChange={(columns) => updateQuestionField('dataColumns', columns)}
-              onRowsChange={(rows) => updateQuestionField('dataRows', rows)}
-            />
+            {question.format === 'data-sufficiency' ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-foreground">Question Content</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground mb-4">
+                    Data sufficiency questions don't require a data table. The question content is managed in the next tab.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <DataTableInput
+                columns={question.dataColumns}
+                rows={question.dataRows}
+                onColumnsChange={(columns) => updateQuestionField('dataColumns', columns)}
+                onRowsChange={(rows) => updateQuestionField('dataRows', rows)}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="statements" className="space-y-6">
-            <StatementsInput
-              statements={question.statements}
-              instructions={question.instructions}
-              onStatementsChange={(statements) => updateQuestionField('statements', statements)}
-              onInstructionsChange={(instructions) => updateQuestionField('instructions', instructions)}
-            />
+            {question.format === 'yes-no-statements' && (
+              <StatementsInput
+                statements={question.statements}
+                instructions={question.instructions}
+                onStatementsChange={(statements) => updateQuestionField('statements', statements)}
+                onInstructionsChange={(instructions) => updateQuestionField('instructions', instructions)}
+              />
+            )}
+            
+            {question.format === 'multi-column-selection' && (
+              <MultiColumnSelectionInput
+                columns={question.selectionColumns || []}
+                options={question.selectionOptions || []}
+                instructions={question.instructions}
+                onColumnsChange={(columns) => updateQuestionField('selectionColumns', columns)}
+                onOptionsChange={(options) => updateQuestionField('selectionOptions', options)}
+                onInstructionsChange={(instructions) => updateQuestionField('instructions', instructions)}
+              />
+            )}
+            
+            {question.format === 'data-sufficiency' && (
+              <DataSufficiencyInput
+                questionText={question.questionText || ''}
+                statements={question.sufficiencyStatements || []}
+                options={question.sufficiencyOptions || []}
+                onQuestionTextChange={(text) => updateQuestionField('questionText', text)}
+                onStatementsChange={(statements) => updateQuestionField('sufficiencyStatements', statements)}
+                onOptionsChange={(options) => updateQuestionField('sufficiencyOptions', options)}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="preview" className="space-y-6">
