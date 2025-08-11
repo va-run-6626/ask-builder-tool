@@ -76,18 +76,13 @@ export const QuestionPreview: React.FC<QuestionPreviewProps> = ({ question }) =>
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Left side - Data and Description */}
       <div className="space-y-4">
-        <div className="prose prose-sm max-w-none">
-          <p className="text-foreground leading-relaxed">
-            The table lists data on each of {dataRows.length} items advertised by an Internet retailer on a single 
-            web page as part of a one-day sale. The term <em>customer</em> refers to anyone who 
-            viewed that web page on that day. For each item, the <em>page placement</em> denotes the 
-            quadrant of the page on which the item's advertisement appeared; the <em>mean eye 
-            time</em> is the average (arithmetic mean) number of seconds that each customer spent 
-            viewing the item's advertisement; the <em>infoclick percentage</em> is the percentage of all 
-            customers who clicked a button for more information; and the <em>sales rank</em> is the 
-            item's ranking based on sales, where a lesser number denotes greater sales.
-          </p>
-        </div>
+        {question.contextDescription && (
+          <div className="prose prose-sm max-w-none">
+            <p className="text-foreground leading-relaxed">
+              {question.contextDescription}
+            </p>
+          </div>
+        )}
 
         {/* Sort Controls */}
         <div className="flex items-center gap-3 mb-4">

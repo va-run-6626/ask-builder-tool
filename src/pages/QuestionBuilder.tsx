@@ -43,7 +43,8 @@ const QuestionBuilder = () => {
         correctAnswer: 'yes'
       }
     ] as QuestionStatement[],
-    instructions: 'For each of the following statements about this data, select Yes if the statement can be inferred from the given information. Otherwise, select No.'
+    instructions: 'For each of the following statements about this data, select Yes if the statement can be inferred from the given information. Otherwise, select No.',
+    contextDescription: 'The table lists data on each of 4 items advertised by an Internet retailer on a single web page as part of a one-day sale. The term customer refers to anyone who viewed that web page on that day. For each item, the page placement denotes the quadrant of the page on which the item\'s advertisement appeared; the mean eye time is the average (arithmetic mean) number of seconds that each customer spent viewing the item\'s advertisement; the infoclick percentage is the percentage of all customers who clicked a button for more information; and the sales rank is the item\'s ranking based on sales, where a lesser number denotes greater sales.'
   });
 
   const updateQuestionField = (field: keyof Question, value: any) => {
@@ -182,6 +183,20 @@ const QuestionBuilder = () => {
                     rows={3}
                   />
                 </div>
+                
+                {question.format === 'yes-no-statements' && (
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Context Description
+                    </label>
+                    <Textarea
+                      value={question.contextDescription || ''}
+                      onChange={(e) => updateQuestionField('contextDescription', e.target.value)}
+                      placeholder="Enter the context description that explains the data table (e.g., what the table represents, definitions of terms, etc.)"
+                      rows={4}
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

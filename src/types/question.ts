@@ -43,6 +43,9 @@ export interface Question {
   statements: QuestionStatement[];
   instructions: string;
   
+  // Yes/No statements specific
+  contextDescription?: string;
+  
   // Multi-column selection specific
   selectionColumns?: string[];
   selectionOptions?: MultiColumnOption[];
