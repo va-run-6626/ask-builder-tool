@@ -81,94 +81,129 @@ export const DataTableInput: React.FC<DataTableInputProps> = ({
       <CardHeader>
         <CardTitle className="text-foreground">Data Table Configuration</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Column Configuration */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Columns</h3>
+      <CardContent>
+        <div className="space-y-4">
+          {/* Add Column Button */}
+          <div className="flex justify-end">
             <Button onClick={addColumn} size="sm" variant="outline">
               <Plus className="w-4 h-4 mr-2" />
               Add Column
             </Button>
           </div>
-          
-          <div className="space-y-3">
-            {columns.map((column, index) => (
-              <div key={column.key} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                <Input
-                  placeholder="Column Label"
-                  value={column.label}
-                  onChange={(e) => updateColumn(index, 'label', e.target.value)}
-                  className="flex-1"
-                />
-                <Input
-                  placeholder="Column Key"
-                  value={column.key}
-                  onChange={(e) => updateColumn(index, 'key', e.target.value)}
-                  className="flex-1"
-                />
-                <Select
-                  value={column.type}
-                  onValueChange={(value: 'text' | 'number' | 'percentage') => 
-                    updateColumn(index, 'type', value)
-                  }
-                >
-                  <SelectTrigger className="w-32">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="text">Text</SelectItem>
-                    <SelectItem value="number">Number</SelectItem>
-                    <SelectItem value="percentage">Percentage</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={() => removeColumn(index)}
-                  size="sm"
-                  variant="outline"
-                  className="shrink-0"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Data Rows */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-foreground">Data Rows</h3>
-            <Button onClick={addRow} size="sm" variant="outline" disabled={columns.length === 0}>
-              <Plus className="w-4 h-4 mr-2" />
-              Add Row
-            </Button>
-          </div>
-
-          {columns.length > 0 && (
-            <div className="space-y-3">
-              {rows.map((row, rowIndex) => (
-                <div key={row.id} className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                  {columns.map((column) => (
+          {/* Table Structure */}
+          <div className="border rounded-lg overflow-hidden">
+            <table className="w-full">
+              {/* Header Row - Column Configuration */}
+              <thead>
+                <tr className="border-b bg-muted/50">
+                  {columns.map((column, index) => (
+                    <th key={column.key} className="p-3 text-left">
+                      <div className="space-y-2">
+                        {/* Type Selector */}
+                        <Select
+                          value={column.type}
+                          onValueChange={(value: 'text' | 'number' | 'percentage') => 
+                            updateColumn(index, 'type', value)
+                          }
+                        >
+                          <SelectTrigger className="w-full h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="text">Text</SelectItem>
+                            <SelectItem value="number">Number</SelectItem>
+                            <SelectItem value="percentage">Percentage</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        {/* Header Input */}
+                        <Input
+                          placeholder="Column Header"
+                          value={column.label}
+                          onChange={(e) => updateColumn(index, 'label', e.target.value)}
+                          className="h-8 text-xs font-medium"
+                        />
+                      </div>
+                    </th>
+                  ))}
+                  {columns.length > 0 && (
+                    <th className="p-3 w-12">
+                      <span className="text-xs text-muted-foreground">Actions</span>
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              
+              {/* Data Rows */}
+              <tbody>
+                {rows.map((row, rowIndex) => (
+                  <tr key={row.id} className="border-b hover:bg-muted/25">
+                    {columns.map((column) => (
+                      <td key={column.key} className="p-3">
+                        <Input
+                          placeholder={`Enter ${column.label.toLowerCase()}`}
+                          value={row[column.key] || ''}
+                          onChange={(e) => updateRow(rowIndex, column.key, e.target.value)}
+                          type={column.type === 'number' ? 'number' : 'text'}
+                          className="h-8"
+                        />
+                      </td>
+                    ))}
+                    {columns.length > 0 && (
+                      <td className="p-3">
+                        <div className="flex gap-1">
+                          <Button
+                            onClick={() => removeRow(rowIndex)}
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 hover:bg-destructive hover:text-destructive-foreground"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            
+            {/* Column Actions Row */}
+            {columns.length > 0 && (
+              <div className="border-t bg-muted/25">
+                <div className="p-3 flex gap-3">
+                  {columns.map((column, index) => (
                     <div key={column.key} className="flex-1">
-                      <Input
-                        placeholder={column.label}
-                        value={row[column.key] || ''}
-                        onChange={(e) => updateRow(rowIndex, column.key, e.target.value)}
-                        type={column.type === 'number' ? 'number' : 'text'}
-                      />
+                      <Button
+                        onClick={() => removeColumn(index)}
+                        size="sm"
+                        variant="ghost"
+                        className="w-full h-6 text-xs text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      >
+                        Remove Column
+                      </Button>
                     </div>
                   ))}
-                  <Button
-                    onClick={() => removeRow(rowIndex)}
-                    size="sm"
-                    variant="outline"
-                    className="shrink-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  <div className="w-12"></div>
                 </div>
-              ))}
+              </div>
+            )}
+          </div>
+
+          {/* Add Row Button */}
+          {columns.length > 0 && (
+            <div className="flex justify-center">
+              <Button onClick={addRow} size="sm" variant="outline">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Row
+              </Button>
+            </div>
+          )}
+
+          {columns.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>Add columns to start building your data table</p>
             </div>
           )}
         </div>
